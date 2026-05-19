@@ -662,17 +662,17 @@ class App {
             input.type = 'file';
             input.accept = '.xlsx,.xls';
             input.onchange = (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
+                const file = e.target.files[0];
                 if (!file) return;
                 
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     try {
-                        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                        const data = new Uint8Array(event.target.result);
                         const workbook = XLSX.read(data, { type: 'array' });
                         
                         let importedCount = 0;
-                        const errors: string[] = [];
+                        const errors = [];
                         
                         // 遍历所有 sheet
                         workbook.SheetNames.forEach((sheetName, sheetIndex) => {
@@ -686,9 +686,9 @@ class App {
                                 
                                 try {
                                     const year = parseInt(row[0]) || new Date().getFullYear();
-                                    const awardName = row[1]?.toString() || '未命名奖项';
-                                    const recipients = row[2]?.toString().replace(/、/g, ',') || '';
-                                    const organization = row[3]?.toString().replace(/、/g, ',') || '';
+                                    const awardName = (row[1] || '').toString() || '未命名奖项';
+                                    const recipients = (row[2] || '').toString().replace(/、/g, ',');
+                                    const organization = (row[3] || '').toString().replace(/、/g, ',');
                                     
                                     // 确定奖项等级
                                     let level = '校级';
@@ -707,24 +707,24 @@ class App {
                                         recipients,
                                         organization,
                                         department: '',
-                                        description: `来自表格: ${sheetName}，第${i+1}行`,
+                                        description: '来自表格: ' + sheetName + '，第' + (i+1) + '行',
                                         created_at: new Date().toISOString().split('T')[0]
                                     });
                                     importedCount++;
                                 } catch (e) {
-                                    errors.push(`Sheet ${sheetName} 第${i+1}行: ${(e as Error).message}`);
+                                    errors.push('Sheet ' + sheetName + ' 第' + (i+1) + '行: ' + e.message);
                                 }
                             }
                         });
                         
-                        let message = `成功导入 ${importedCount} 条数据！`;
+                        let message = '成功导入 ' + importedCount + ' 条数据！';
                         if (errors.length > 0) {
-                            message += `\n\n导入失败 ${errors.length} 条：\n${errors.join('\n')}`;
+                            message += '\n\n导入失败 ' + errors.length + ' 条：\n' + errors.join('\n');
                         }
                         alert(message);
                         this.render();
                     } catch (e) {
-                        alert(`导入失败: ${(e as Error).message}`);
+                        alert('导入失败: ' + e.message);
                     }
                 };
                 reader.readAsArrayBuffer(file);

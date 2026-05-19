@@ -1,0 +1,52 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/search/search",
+    "pages/detail/detail",
+    "pages/admin/admin",
+    "pages/statistics/statistics",
+    "pages/login/login",
+    "pages/favorites/favorites"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#10B981",
+    "navigationBarTitleText": "科研奖励获奖信息查询系统",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#10B981",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/statistics/statistics",
+        "text": "统计",
+        "iconPath": "assets/icons/chart.png",
+        "selectedIconPath": "assets/icons/chart-active.png"
+      },
+      {
+        "pagePath": "pages/favorites/favorites",
+        "text": "收藏",
+        "iconPath": "assets/icons/star.png",
+        "selectedIconPath": "assets/icons/star-active.png"
+      },
+      {
+        "pagePath": "pages/admin/admin",
+        "text": "管理",
+        "iconPath": "assets/icons/admin.png",
+        "selectedIconPath": "assets/icons/admin-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2"
+}

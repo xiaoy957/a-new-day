@@ -1,0 +1,17 @@
+{
+  "name": "research-award-system",
+  "version": "1.0.0",
+  "description": "科研奖励获奖信息查询系统",
+  "scripts": {
+    "dev": "wx-scripts dev",
+    "build": "wx-scripts build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

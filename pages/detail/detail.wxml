@@ -1,0 +1,63 @@
+<view class="container">
+  <view wx:if="{{award}}" class="content">
+    <view class="header-card">
+      <view class="level-badge" style="background: {{getLevelColor(award.level)}}">
+        {{award.level}}
+      </view>
+      <text class="year-text">{{award.year}}年</text>
+      <text class="session-text" wx:if="{{award.session}}">第{{award.session}}届</text>
+    </view>
+
+    <view class="info-card">
+      <text class="title">{{award.name}}</text>
+      <text class="award-name">{{award.award_name}}</text>
+    </view>
+
+    <view class="detail-card">
+      <view class="detail-item">
+        <text class="detail-label">获奖人</text>
+        <text class="detail-value">{{award.recipients}}</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">获奖单位</text>
+        <text class="detail-value">{{award.organization}}</text>
+      </view>
+      <view class="detail-item" wx:if="{{award.department}}">
+        <text class="detail-label">获奖部门</text>
+        <text class="detail-value">{{award.department}}</text>
+      </view>
+      <view class="detail-item">
+        <text class="detail-label">奖项类别</text>
+        <text class="detail-value">{{award.category || '未分类'}}</text>
+      </view>
+    </view>
+
+    <view class="desc-card" wx:if="{{award.description}}">
+      <text class="desc-title">成果描述</text>
+      <text class="desc-content">{{award.description}}</text>
+    </view>
+
+    <view class="time-card">
+      <text class="time-text">创建时间: {{formatTime(award.created_at)}}</text>
+      <text class="time-text">更新时间: {{formatTime(award.updated_at)}}</text>
+    </view>
+  </view>
+
+  <view wx:if="{{!award}}" class="loading">
+    <text>加载中...</text>
+  </view>
+</view>
+
+<view class="action-bar">
+  <button 
+    class="action-btn {{isFavorite ? 'favorited' : ''}}" 
+    bindtap="toggleFavorite"
+    disabled="{{!hasUser}}"
+  >
+    <text class="action-icon">{{isFavorite ? '★' : '☆'}}</text>
+    <text>{{isFavorite ? '已收藏' : '收藏'}}</text>
+  </button>
+  <button class="action-btn primary" bindtap="goBack">
+    <text>返回</text>
+  </button>
+</view>

@@ -1,0 +1,41 @@
+<view class="container">
+  <view class="fav-header">
+    <text class="fav-title">我的收藏</text>
+    <text class="fav-subtitle">收藏您感兴趣的获奖信息</text>
+  </view>
+
+  <view wx:if="{{!hasUser}}" class="login-prompt">
+    <view class="prompt-icon">🔒</view>
+    <text class="prompt-title">请先登录</text>
+    <text class="prompt-desc">登录后可使用收藏功能</text>
+    <button class="login-btn" bindtap="goToLogin">去登录</button>
+  </view>
+
+  <scroll-view wx:else class="fav-list" scroll-y>
+    <view 
+      wx:for="{{favorites}}" 
+      wx:key="id" 
+      class="fav-item"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="item-header">
+        <text class="item-level" style="background: {{getLevelColor(item.level)}}">{{item.level}}</text>
+        <text class="item-year">{{item.year}}年</text>
+      </view>
+      <text class="item-title">{{item.name}}</text>
+      <text class="item-award">{{item.award_name}}</text>
+      <text class="item-recipient">{{item.recipients}}</text>
+      <view class="item-action" bindtap="removeFavorite" data-id="{{item.id}}" catchtap="stopPropagation">
+        <text class="remove-icon">★</text>
+        <text class="remove-text">已收藏</text>
+      </view>
+    </view>
+
+    <view wx:if="{{favorites.length === 0}}" class="empty">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无收藏</text>
+      <text class="empty-hint">去搜索并收藏感兴趣的获奖信息吧</text>
+    </view>
+  </scroll-view>
+</view>

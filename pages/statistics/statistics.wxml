@@ -1,0 +1,170 @@
+<view class="container">
+  <view class="stats-header">
+    <text class="stats-title">统计分析</text>
+    <text class="stats-subtitle">数据可视化展示</text>
+  </view>
+
+  <view class="tabs">
+    <view 
+      wx:for="{{tabs}}" 
+      wx:key="key"
+      class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-tab="{{item.key}}"
+    >
+      {{item.name}}
+    </view>
+  </view>
+
+  <view class="tab-content">
+    <view wx:if="{{activeTab === 'overview'}}" class="overview-content">
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-num">{{overview.total}}</text>
+          <text class="stat-label">总获奖数</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-num">{{overview.national}}</text>
+          <text class="stat-label">国家级奖项</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-num">{{overview.provincial}}</text>
+          <text class="stat-label">省级奖项</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-num">{{overview.municipal}}</text>
+          <text class="stat-label">市级奖项</text>
+        </view>
+      </view>
+
+      <view class="chart-card">
+        <text class="chart-title">各等级奖项分布</text>
+        <view class="pie-chart">
+          <view class="pie" style="background: conic-gradient(#ef4444 {{nationalPercent}}deg, #f97316 {{nationalPercent}}deg {{nationalPercent + provincialPercent}}deg, #eab308 {{nationalPercent + provincialPercent}}deg {{nationalPercent + provincialPercent + municipalPercent}}deg, #22c55e {{nationalPercent + provincialPercent + municipalPercent}}deg 360deg)"></view>
+        </view>
+        <view class="legend">
+          <view class="legend-item">
+            <view class="legend-dot" style="background: #ef4444"></view>
+            <text>国家级 {{overview.national}}</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot" style="background: #f97316"></view>
+            <text>省级 {{overview.provincial}}</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot" style="background: #eab308"></view>
+            <text>市级 {{overview.municipal}}</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot" style="background: #22c55e"></view>
+            <text>校级 {{overview.school}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{activeTab === 'trend'}}" class="trend-content">
+      <view class="filter-row">
+        <picker mode="selector" range="{{awardNames}}" value="{{selectedAwardIndex}}" bindchange="onAwardChange">
+          <view class="filter-picker">
+            {{selectedAward || '选择奖项'}}
+          </view>
+        </picker>
+      </view>
+
+      <view class="chart-card">
+        <text class="chart-title">{{selectedAward || '奖项'}}历年获奖趋势</text>
+        <view class="bar-chart">
+          <view 
+            wx:for="{{trendData}}" 
+            wx:key="year" 
+            class="bar-item"
+          >
+            <view class="bar" style="height: {{getBarHeight(item.count)}}%">
+              <text class="bar-value">{{item.count}}</text>
+            </view>
+            <text class="bar-label">{{item.year}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{activeTab === 'person'}}" class="person-content">
+      <view class="search-box">
+        <input 
+          class="search-input" 
+          placeholder="输入姓名查询获奖数" 
+          value="{{personKeyword}}"
+          bindinput="onPersonSearchInput"
+          bindconfirm="searchPerson"
+        />
+        <button class="search-btn" bindtap="searchPerson">查询</button>
+      </view>
+
+      <view class="person-result" wx:if="{{personResult}}">
+        <view class="result-header">
+          <text class="result-name">{{personKeyword}}</text>
+          <text class="result-count">共获奖 {{personResult.count}} 次</text>
+        </view>
+        <view class="result-list">
+          <view 
+            wx:for="{{personResult.awards}}" 
+            wx:key="id" 
+            class="result-item"
+            bindtap="goToDetail"
+            data-id="{{item.id}}"
+          >
+            <text class="item-award">{{item.award_name}}</text>
+            <text class="item-year">{{item.year}}年</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="top-list" wx:if="{{topRecipients.length > 0}}">
+        <text class="top-title">获奖次数Top10</text>
+        <view 
+          wx:for="{{topRecipients}}" 
+          wx:key="name"
+          class="top-item"
+        >
+          <text class="top-rank">{{index + 1}}</text>
+          <text class="top-name">{{item.name}}</text>
+          <text class="top-count">{{item.count}}次</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{activeTab === 'organization'}}" class="org-content">
+      <view class="search-box">
+        <input 
+          class="search-input" 
+          placeholder="输入单位名称" 
+          value="{{orgKeyword}}"
+          bindinput="onOrgSearchInput"
+          bindconfirm="searchOrg"
+        />
+        <button class="search-btn" bindtap="searchOrg">查询</button>
+      </view>
+
+      <view class="org-result" wx:if="{{orgResult}}">
+        <view class="result-header">
+          <text class="result-name">{{orgKeyword}}</text>
+          <text class="result-count">共获奖 {{orgResult.count}} 次</text>
+        </view>
+      </view>
+
+      <view class="top-list" wx:if="{{topOrgs.length > 0}}">
+        <text class="top-title">获奖单位Top10</text>
+        <view 
+          wx:for="{{topOrgs}}" 
+          wx:key="name"
+          class="top-item"
+        >
+          <text class="top-rank">{{index + 1}}</text>
+          <text class="top-name">{{item.name}}</text>
+          <text class="top-count">{{item.count}}次</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

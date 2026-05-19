@@ -1,0 +1,128 @@
+<view class="container">
+  <view class="admin-header">
+    <text class="admin-title">管理后台</text>
+    <text class="admin-subtitle">数据录入与管理</text>
+  </view>
+
+  <view class="action-section">
+    <view class="action-card" bindtap="importData">
+      <view class="action-icon">📥</view>
+      <view class="action-content">
+        <text class="action-title">批量导入</text>
+        <text class="action-desc">从Excel/TXT导入数据</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+
+    <view class="action-card" bindtap="addAward">
+      <view class="action-icon">➕</view>
+      <view class="action-content">
+        <text class="action-title">添加获奖</text>
+        <text class="action-desc">手动添加单条获奖信息</text>
+      </view>
+      <text class="action-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="search-section">
+    <view class="search-box">
+      <input 
+        class="search-input" 
+        placeholder="搜索获奖信息..." 
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+      <button class="search-btn" bindtap="onSearch">搜索</button>
+    </view>
+  </view>
+
+  <scroll-view class="list-section" scroll-y>
+    <view 
+      wx:for="{{awards}}" 
+      wx:key="id" 
+      class="list-item"
+    >
+      <view class="item-content" bindtap="viewDetail" data-id="{{item.id}}">
+        <view class="item-header">
+          <text class="item-level" style="background: {{getLevelColor(item.level)}}">{{item.level}}</text>
+          <text class="item-year">{{item.year}}年</text>
+        </view>
+        <text class="item-title">{{item.name}}</text>
+        <text class="item-info">{{item.award_name}} · {{item.recipients}}</text>
+      </view>
+      <view class="item-actions">
+        <view class="action-btn edit" bindtap="editAward" data-id="{{item.id}}">
+          <text>编辑</text>
+        </view>
+        <view class="action-btn delete" bindtap="deleteAward" data-id="{{item.id}}">
+          <text>删除</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{awards.length === 0}}" class="empty">
+      <text class="empty-icon">📋</text>
+      <text class="empty-text">暂无数据</text>
+    </view>
+  </scroll-view>
+</view>
+
+<view class="modal-overlay" wx:if="{{showModal}}" bindtap="closeModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-header">
+      <text class="modal-title">{{editingAward ? '编辑获奖信息' : '添加获奖信息'}}</text>
+      <text class="modal-close" bindtap="closeModal">✕</text>
+    </view>
+    <view class="modal-body">
+      <view class="form-item">
+        <text class="form-label">成果名称 *</text>
+        <input class="form-input" placeholder="请输入成果名称" value="{{formData.name}}" bindinput="onFormInput" data-field="name" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">奖项名称 *</text>
+        <input class="form-input" placeholder="请输入奖项名称" value="{{formData.award_name}}" bindinput="onFormInput" data-field="award_name" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">奖项类别</text>
+        <input class="form-input" placeholder="请输入奖项类别" value="{{formData.category}}" bindinput="onFormInput" data-field="category" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">奖项等级 *</text>
+        <picker mode="selector" range="{{levels}}" value="{{levelIndex}}" bindchange="onLevelChange">
+          <view class="form-picker">
+            {{levels[levelIndex] || '请选择等级'}}
+          </view>
+        </picker>
+      </view>
+      <view class="form-item">
+        <text class="form-label">获奖年份 *</text>
+        <input class="form-input" type="number" placeholder="请输入年份" value="{{formData.year}}" bindinput="onFormInput" data-field="year" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">届数</text>
+        <input class="form-input" type="number" placeholder="请输入届数" value="{{formData.session}}" bindinput="onFormInput" data-field="session" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">获奖人 *</text>
+        <input class="form-input" placeholder="请输入获奖人" value="{{formData.recipients}}" bindinput="onFormInput" data-field="recipients" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">获奖单位 *</text>
+        <input class="form-input" placeholder="请输入获奖单位" value="{{formData.organization}}" bindinput="onFormInput" data-field="organization" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">获奖部门</text>
+        <input class="form-input" placeholder="请输入获奖部门" value="{{formData.department}}" bindinput="onFormInput" data-field="department" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">成果描述</text>
+        <textarea class="form-textarea" placeholder="请输入成果描述" value="{{formData.description}}" bindinput="onFormInput" data-field="description" />
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="modal-btn cancel" bindtap="closeModal">取消</button>
+      <button class="modal-btn confirm" bindtap="submitForm">确认</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,95 @@
+<view class="container">
+  <view class="header">
+    <text class="title">科研奖励获奖信息查询系统</text>
+    <text class="subtitle">一站式查询科研获奖成果</text>
+  </view>
+
+  <view class="search-section">
+    <view class="search-box">
+      <input 
+        class="search-input" 
+        placeholder="请输入姓名、单位、成果名称或奖项名称" 
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+      <button class="search-btn" bindtap="onSearch">
+        <text class="search-icon">🔍</text>
+      </button>
+    </view>
+    <view class="quick-filters">
+      <view 
+        wx:for="{{quickFilters}}" 
+        wx:key="name"
+        class="filter-tag"
+        bindtap="onQuickFilter"
+        data-filter="{{item.filter}}"
+      >
+        {{item.name}}
+      </view>
+    </view>
+  </view>
+
+  <view class="stats-section">
+    <view class="stat-card">
+      <text class="stat-value">{{stats.total}}</text>
+      <text class="stat-label">总获奖数</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-value">{{stats.organizations}}</text>
+      <text class="stat-label">获奖单位</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-value">{{stats.awards}}</text>
+      <text class="stat-label">奖项种类</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">热门奖项</text>
+      <text class="section-more" bindtap="goToSearch">更多 →</text>
+    </view>
+    <scroll-view class="hot-awards" scroll-x>
+      <view 
+        wx:for="{{hotAwards}}" 
+        wx:key="id" 
+        class="award-card"
+        bindtap="goToDetail"
+        data-id="{{item.id}}"
+      >
+        <view class="award-badge" style="background: {{item.color}}">
+          {{item.level}}
+        </view>
+        <text class="award-name">{{item.award_name}}</text>
+        <text class="award-recipient">{{item.recipients}}</text>
+        <text class="award-year">{{item.year}}年</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">最新获奖</text>
+      <text class="section-more" bindtap="goToSearch">更多 →</text>
+    </view>
+    <view class="latest-list">
+      <view 
+        wx:for="{{latestAwards}}" 
+        wx:key="id" 
+        class="latest-item"
+        bindtap="goToDetail"
+        data-id="{{item.id}}"
+      >
+        <view class="latest-content">
+          <text class="latest-name">{{item.name}}</text>
+          <text class="latest-info">{{item.award_name}} · {{item.recipients}}</text>
+        </view>
+        <text class="latest-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="query-info">
+    <text class="query-text">今日剩余查询次数: {{remainingQueries}}次</text>
+  </view>
+</view>

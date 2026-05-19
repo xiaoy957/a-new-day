@@ -1,0 +1,104 @@
+<view class="container">
+  <view class="search-header">
+    <view class="search-box">
+      <input 
+        class="search-input" 
+        placeholder="请输入搜索关键词" 
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+      />
+      <button class="search-btn" bindtap="onSearch">
+        <text>搜索</text>
+      </button>
+    </view>
+  </view>
+
+  <view class="filter-bar">
+    <scroll-view scroll-x class="filter-scroll">
+      <view class="filter-items">
+        <view 
+          class="filter-item {{!selectedLevel ? 'active' : ''}}" 
+          bindtap="selectLevel"
+          data-level=""
+        >
+          全部等级
+        </view>
+        <view 
+          wx:for="{{levels}}" 
+          wx:key="name"
+          class="filter-item {{selectedLevel === item.name ? 'active' : ''}}" 
+          bindtap="selectLevel"
+          data-level="{{item.name}}"
+        >
+          {{item.name}}
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="filter-bar">
+    <scroll-view scroll-x class="filter-scroll">
+      <view class="filter-items">
+        <view 
+          class="filter-item {{!selectedYear ? 'active' : ''}}" 
+          bindtap="selectYear"
+          data-year=""
+        >
+          全部年份
+        </view>
+        <view 
+          wx:for="{{years}}" 
+          wx:key="name"
+          class="filter-item {{selectedYear === item.name ? 'active' : ''}}" 
+          bindtap="selectYear"
+          data-year="{{item.name}}"
+        >
+          {{item.name}}
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="result-count">
+    <text>共找到 {{total}} 条结果</text>
+  </view>
+
+  <scroll-view 
+    class="result-list" 
+    scroll-y 
+    bindscrolltolower="onLoadMore"
+    lower-threshold="50"
+  >
+    <view 
+      wx:for="{{results}}" 
+      wx:key="id" 
+      class="result-item"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <view class="item-header">
+        <text class="item-level" style="background: {{getLevelColor(item.level)}}">{{item.level}}</text>
+        <text class="item-year">{{item.year}}年</text>
+      </view>
+      <text class="item-title">{{item.name}}</text>
+      <text class="item-award">{{item.award_name}}</text>
+      <text class="item-recipient">获奖人: {{item.recipients}}</text>
+      <text class="item-organization">获奖单位: {{item.organization}}</text>
+    </view>
+
+    <view wx:if="{{loading}}" class="loading">
+      <text>加载中...</text>
+    </view>
+
+    <view wx:if="{{!loading && !hasMore}}" class="no-more">
+      <text>已加载全部</text>
+    </view>
+
+    <view wx:if="{{results.length === 0 && !loading}}" class="empty">
+      <text class="empty-icon">🔍</text>
+      <text class="empty-text">暂无搜索结果</text>
+      <text class="empty-hint">请尝试其他关键词</text>
+    </view>
+  </scroll-view>
+</view>

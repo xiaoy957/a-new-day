@@ -1,0 +1,152 @@
+.container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 100rpx;
+}
+
+.fav-header {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  padding: 80rpx 30rpx 60rpx;
+  border-radius: 0 0 40rpx 40rpx;
+}
+
+.fav-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 10rpx;
+}
+
+.fav-subtitle {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.login-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 30rpx;
+}
+
+.prompt-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.prompt-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15rpx;
+}
+
+.prompt-desc {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+}
+
+.login-btn {
+  background: #f59e0b;
+  color: #fff;
+  padding: 25rpx 80rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+}
+
+.fav-list {
+  height: calc(100vh - 220rpx);
+  padding: 30rpx;
+}
+
+.fav-item {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 25rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  margin-bottom: 15rpx;
+}
+
+.item-level {
+  padding: 5rpx 15rpx;
+  border-radius: 10rpx;
+  font-size: 20rpx;
+  color: #fff;
+}
+
+.item-year {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.item-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.item-award {
+  display: block;
+  font-size: 26rpx;
+  color: #f59e0b;
+  margin-bottom: 8rpx;
+}
+
+.item-recipient {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.item-action {
+  position: absolute;
+  right: 25rpx;
+  bottom: 25rpx;
+  display: flex;
+  align-items: center;
+  gap: 5rpx;
+}
+
+.remove-icon {
+  font-size: 24rpx;
+  color: #f59e0b;
+}
+
+.remove-text {
+  font-size: 22rpx;
+  color: #f59e0b;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 0;
+}
+
+.empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #999;
+}

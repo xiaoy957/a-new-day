@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科研奖励获奖信息查询系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .level-national { background: #EF4444; }
+        .level-provincial { background: #F97316; }
+        .level-municipal { background: #EAB308; }
+        .level-school { background: #22C55E; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app"></div>
+
+<script>
+// ==================== 数据层 ====================
+const mockData = [
+    { id: 1, name: '高性能计算在材料科学中的应用', award_name: '国家自然科学奖', category: '自然科学', level: '国家级', year: 2023, session: 5, recipients: '张三, 李四', organization: '清华大学', department: '计算机科学与技术系', description: '该研究将高性能计算技术应用于新材料的开发，取得了突破性成果。', created_at: '2024-01-15' },
+    { id: 2, name: '人工智能在医学影像诊断中的研究', award_name: '国家科技进步奖', category: '科技进步', level: '国家级', year: 2023, session: 7, recipients: '王五, 赵六', organization: '北京大学', department: '人工智能研究院', description: '开发了一套基于深度学习的医学影像诊断系统，准确率达到95%以上。', created_at: '2024-01-14' },
+    { id: 3, name: '新型能源材料的研发', award_name: '北京市科学技术奖', category: '科学技术', level: '市级', year: 2022, session: 12, recipients: '钱七, 孙八', organization: '北京理工大学', department: '材料科学与工程学院', description: '研发的新型电池材料显著提升了能量密度。', created_at: '2024-01-13' },
+    { id: 4, name: '量子计算理论研究', award_name: '国家自然科学奖', category: '自然科学', level: '国家级', year: 2022, session: 4, recipients: '周九', organization: '中国科学院', department: '计算技术研究所', description: '在量子算法设计方面取得重要突破。', created_at: '2024-01-12' },
+    { id: 5, name: '5G通信网络优化', award_name: '广东省科技进步奖', category: '科技进步', level: '省级', year: 2023, session: 8, recipients: '吴十, 郑十一', organization: '华南理工大学', department: '电子与信息学院', description: '提出的通信网络优化方案提升了网络效率30%。', created_at: '2024-01-11' },
+    { id: 6, name: '新型抗癌药物研发', award_name: '国家科技进步奖', category: '医药科技', level: '国家级', year: 2024, session: 6, recipients: '陈十二, 林十三', organization: '复旦大学', department: '药学院', description: '研发的新型靶向药物在临床试验中显示出良好的疗效。', created_at: '2024-01-10' },
+    { id: 7, name: '智能交通系统研究', award_name: '上海市科技进步奖', category: '工程技术', level: '市级', year: 2023, session: 9, recipients: '黄十四', organization: '上海交通大学', department: '电子信息与电气工程学院', description: '构建了城市级智能交通管理系统。', created_at: '2024-01-09' },
+    { id: 8, name: '深海探测技术研究', award_name: '国家技术发明奖', category: '技术发明', level: '国家级', year: 2023, session: 3, recipients: '刘十五, 杨十六', organization: '中国海洋大学', department: '海洋与大气学院', description: '自主研发的深海探测设备达到国际先进水平。', created_at: '2024-01-08' }
+];
+
+// ==================== 状态管理 ====================
+const store = {
+    user: JSON.parse(localStorage.getItem('user') || 'null'),
+    favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
+    currentPage: 'home',
+    searchKeyword: '',
+    
+    login(user) { this.user = user; localStorage.setItem('user', JSON.stringify(user)); },
+    logout() { this.user = null; localStorage.removeItem('user'); this.favorites = []; localStorage.removeItem('favorites'); },
+    addFavorite(id) { if (!this.favorites.includes(id)) { this.favorites.push(id); localStorage.setItem('favorites', JSON.stringify(this.favorites)); } },
+    removeFavorite(id) { this.favorites = this.favorites.filter(x => x !== id); localStorage.setItem('favorites', JSON.stringify(this.favorites)); },
+    isFavorite(id) { return this.favorites.includes(id); }
+};
+
+// ==================== 工具函数 ====================
+const utils = {
+    getLevelColor(level) { return { '国家级': 'bg-red-500', '省级': 'bg-orange-500', '市级': 'bg-yellow-500', '校级': 'bg-green-500' }[level] || 'bg-gray-500'; },
+    getStats() {
+        const total = mockData.length;
+        const national = mockData.filter(a => a.level === '国家级').length;
+        const provincial = mockData.filter(a => a.level === '省级').length;
+        const municipal = mockData.filter(a => a.level === '市级').length;
+        const school = mockData.filter(a => a.level === '校级').length;
+        const organizations = new Set(mockData.map(a => a.organization)).size;
+        const awardTypes = new Set(mockData.map(a => a.award_name)).size;
+        return { total, national, provincial, municipal, school, organizations, awardTypes };
+    },
+    search(keyword) {
+        if (!keyword) return mockData;
+        const k = keyword.toLowerCase();
+        return mockData.filter(a => 
+            a.name.toLowerCase().includes(k) || a.award_name.toLowerCase().includes(k) ||
+            (a.recipients && a.recipients.toLowerCase().includes(k)) ||
+            (a.organization && a.organization.toLowerCase().includes(k))
+        );
+    },
+    formatDate(dateStr) { return dateStr ? new Date(dateStr).toLocaleDateString('zh-CN') : '-'; }
+};
+
+// ==================== 应用主类 ====================
+class App {
+    constructor() { this.render(); }
+    
+    navigate(page) { store.currentPage = page; this.render(); }
+    search(keyword) { store.searchKeyword = keyword; store.currentPage = 'search'; this.render(); }
+    toggleFavorite(id) { if (store.isFavorite(id)) store.removeFavorite(id); else store.addFavorite(id); this.render(); }
+    
+    getLevelColor(level) { return utils.getLevelColor(level); }
+    getStats() { return utils.getStats(); }
+    
+    // 渲染方法
+    render() {
+        const container = document.getElementById('app');
+        container.innerHTML = `
+            <div class="flex min-h-screen">
+                ${this.sidebar()}
+                <main class="flex-1 overflow-y-auto">${this.currentPage()}</main>
+            </div>
+        `;
+        this.initChart();
+    }
+    
+    sidebar() {
+        const user = store.user;
+        const isAdmin = user && user.is_admin;
+        const navs = [
+            { id: 'home', label: '首页', icon: '🏠' },
+            { id: 'search', label: '搜索', icon: '🔍' },
+            { id: 'statistics', label: '统计', icon: '📊' },
+            { id: 'favorites', label: '收藏', icon: '⭐' },
+            ...(isAdmin ? [{ id: 'admin', label: '管理', icon: '⚙️' }] : [])
+        ];
+        
+        return `
+            <aside class="w-64 bg-white shadow-lg flex flex-col">
+                <div class="p-6 border-b">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center text-white font-bold">🏆</div>
+                        <div>
+                            <h1 class="font-bold text-gray-900">科研奖励</h1>
+                            <p class="text-xs text-gray-500">获奖信息查询</p>
+                        </div>
+                    </div>
+                </div>
+                <nav class="flex-1 p-4 space-y-1">
+                    ${navs.map(nav => `
+                        <div onclick="app.navigate('${nav.id}')" 
+                            class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${store.currentPage === nav.id ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-100'}">
+                            <span>${nav.icon}</span>
+                            <span class="font-medium">${nav.label}</span>
+                        </div>
+                    `).join('')}
+                </nav>
+                <div class="p-4 border-t">
+                    ${user ? `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-medium">${(user.nickname || user.username)[0]}</div>
+                                <div>
+                                    <p class="font-medium text-gray-900">${user.nickname || user.username}</p>
+                                    <p class="text-xs text-gray-500">${user.is_admin ? '管理员' : '用户'}</p>
+                                </div>
+                            </div>
+                            <button onclick="app.handleLogout()" class="p-2 text-gray-400 hover:text-red-500">🚪</button>
+                        </div>
+                    ` : `
+                        <button onclick="app.navigate('login')" class="w-full bg-primary-500 text-white py-2 rounded-lg hover:bg-primary-600">登录</button>
+                    `}
+                </div>
+            </aside>
+        `;
+    }
+    
+    currentPage() {
+        switch (store.currentPage) {
+            case 'home': return this.homePage();
+            case 'search': return this.searchPage();
+            case 'detail': return this.detailPage();
+            case 'statistics': return this.statisticsPage();
+            case 'favorites': return this.favoritesPage();
+            case 'admin': return this.adminPage();
+            case 'login': return this.loginPage();
+            default: return this.homePage();
+        }
+    }
+    
+    homePage() {
+        const stats = this.getStats();
+        const hotAwards = mockData.slice(0, 5);
+        
+        return `
+            <div class="p-8 fade-in">
+                <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-white mb-8">
+                    <h1 class="text-3xl font-bold mb-2">科研奖励获奖信息查询系统</h1>
+                    <p class="text-primary-100 mb-6">一站式查询科研获奖成果，支持多维度搜索和统计分析</p>
+                    <div class="flex gap-4 max-w-2xl">
+                        <div class="flex-1 relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                            <input type="text" id="home-search" placeholder="请输入姓名、单位、成果名称或奖项名称"
+                                class="w-full pl-12 pr-4 py-3 rounded-xl text-gray-900 outline-none"
+                                onkeypress="if(event.key==='Enter') app.search(this.value)">
+                        </div>
+                        <button onclick="app.search(document.getElementById('home-search').value)" 
+                            class="px-8 py-3 bg-white text-primary-600 rounded-xl font-medium hover:bg-gray-50">
+                            搜索
+                        </button>
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                        ${['国家级', '省级', '市级', '2024年', '2023年'].map(f => 
+                            `<button onclick="app.search('${f}')" class="px-4 py-2 bg-white/20 rounded-lg text-sm hover:bg-white/30">${f}</button>`
+                        ).join('')}
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4 cursor-pointer" onclick="app.navigate('statistics')">
+                        <div class="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center text-2xl">🏆</div>
+                        <div><p class="text-2xl font-bold text-gray-900">${stats.total}</p><p class="text-gray-500">总获奖数</p></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
+                        <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">🏛️</div>
+                        <div><p class="text-2xl font-bold text-gray-900">${stats.organizations}</p><p class="text-gray-500">获奖单位</p></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">🎖️</div>
+                        <div><p class="text-2xl font-bold text-gray-900">${stats.awardTypes}</p><p class="text-gray-500">奖项种类</p></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4 cursor-pointer" onclick="app.navigate('statistics')">
+                        <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">📈</div>
+                        <div><p class="text-lg font-bold text-gray-900">查看统计</p><p class="text-gray-500">详细分析</p></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">热门奖项</h2>
+                        <div class="space-y-4">
+                            ${hotAwards.map(a => `
+                                <div onclick="app.navigateToDetail(${a.id})" class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                                    <div class="w-2 h-12 rounded-full ${this.getLevelColor(a.level)}"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-medium text-gray-900 truncate">${a.name}</h3>
+                                        <p class="text-sm text-primary-600">${a.award_name}</p>
+                                        <p class="text-sm text-gray-500">${a.recipients} · ${a.year}年</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">最新获奖</h2>
+                        <div class="space-y-4">
+                            ${[...mockData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5).map(a => `
+                                <div onclick="app.navigateToDetail(${a.id})" class="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="font-medium text-gray-900 truncate">${a.name}</h3>
+                                        <p class="text-sm text-gray-500">${a.award_name} · ${a.recipients}</p>
+                                    </div>
+                                    <span class="text-gray-400">›</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    searchPage() {
+        const results = utils.search(store.searchKeyword);
+        
+        return `
+            <div class="h-full flex flex-col fade-in">
+                <div class="bg-white border-b p-6">
+                    <div class="flex gap-4 max-w-3xl mb-4">
+                        <div class="flex-1 relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                            <input type="text" id="search-input" placeholder="搜索姓名、单位、成果名称或奖项名称"
+                                class="w-full pl-12 pr-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-primary-500"
+                                value="${store.searchKeyword}" onkeypress="if(event.key==='Enter') app.search(this.value)">
+                        </div>
+                        <button onclick="app.search(document.getElementById('search-input').value)" class="px-6 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600">搜索</button>
+                    </div>
+                    <div class="flex gap-2">
+                        ${['全部', '国家级', '省级', '市级', '校级'].map(l => `
+                            <button onclick="app.search('${l === '全部' ? '' : l}')" 
+                                class="px-4 py-2 rounded-lg text-sm ${!store.searchKeyword || store.searchKeyword === l ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'}">${l}</button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <p class="mb-4 text-gray-500">共找到 <span class="font-medium text-gray-900">${results.length}</span> 条结果</p>
+                    <div class="grid gap-4">
+                        ${results.length === 0 ? `
+                            <div class="flex flex-col items-center justify-center h-64 text-gray-400">
+                                <p class="text-6xl mb-4">🔍</p>
+                                <p class="text-lg">暂无搜索结果</p>
+                            </div>
+                        ` : results.map(a => `
+                            <div onclick="app.navigateToDetail(${a.id})" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md cursor-pointer">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="px-2 py-1 text-xs text-white rounded ${this.getLevelColor(a.level)}">${a.level}</span>
+                                            <span class="text-sm text-gray-500">${a.year}年</span>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-900 mb-1">${a.name}</h3>
+                                        <p class="text-primary-600 mb-2">${a.award_name}</p>
+                                        <p class="text-sm text-gray-500">获奖人: ${a.recipients}</p>
+                                        <p class="text-sm text-gray-500">获奖单位: ${a.organization}</p>
+                                    </div>
+                                    <span class="text-gray-400 text-2xl">›</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    detailPage() {
+        const award = mockData.find(a => a.id === store.detailId);
+        if (!award) return '<div class="p-8">未找到该奖项</div>';
+        const isFav = store.isFavorite(award.id);
+        
+        return `
+            <div class="h-full overflow-y-auto p-8 fade-in">
+                <button onclick="app.navigate('search')" class="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6">
+                    ← 返回
+                </button>
+                <div class="max-w-4xl">
+                    <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-white mb-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="px-3 py-1 text-sm rounded-full ${this.getLevelColor(award.level)}">${award.level}</span>
+                            <span class="text-primary-100">${award.year}年</span>
+                            ${award.session ? `<span class="text-primary-100">第${award.session}届</span>` : ''}
+                        </div>
+                        <h1 class="text-2xl font-bold mb-2">${award.name}</h1>
+                        <p class="text-primary-100">${award.award_name}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h2 class="text-lg font-bold text-gray-900 mb-4">获奖信息</h2>
+                            <div class="space-y-4">
+                                <div class="flex items-start gap-3">
+                                    <span class="text-gray-400">👤</span>
+                                    <div><p class="text-sm text-gray-500">获奖人</p><p class="font-medium text-gray-900">${award.recipients}</p></div>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <span class="text-gray-400">🏛️</span>
+                                    <div><p class="text-sm text-gray-500">获奖单位</p><p class="font-medium text-gray-900">${award.organization}</p></div>
+                                </div>
+                                ${award.department ? `
+                                <div class="flex items-start gap-3">
+                                    <span class="text-gray-400">🎖️</span>
+                                    <div><p class="text-sm text-gray-500">获奖部门</p><p class="font-medium text-gray-900">${award.department}</p></div>
+                                </div>` : ''}
+                                <div class="flex items-start gap-3">
+                                    <span class="text-gray-400">📅</span>
+                                    <div><p class="text-sm text-gray-500">奖项类别</p><p class="font-medium text-gray-900">${award.category || '未分类'}</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h2 class="text-lg font-bold text-gray-900 mb-4">时间信息</h2>
+                            <div class="space-y-4">
+                                <div><p class="text-sm text-gray-500">创建时间</p><p class="font-medium text-gray-900">${utils.formatDate(award.created_at)}</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${award.description ? `
+                    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">📝 成果描述</h2>
+                        <p class="text-gray-600 leading-relaxed">${award.description}</p>
+                    </div>` : ''}
+                    
+                    <button onclick="app.toggleFavorite(${award.id})" 
+                        class="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${isFav ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                        ${isFav ? '⭐ 已收藏' : '☆ 收藏'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    statisticsPage() {
+        const stats = this.getStats();
+        const chartId = 'statsChart';
+        
+        return `
+            <div class="h-full overflow-y-auto p-8 fade-in">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">📊 统计分析</h1>
+                
+                <div class="grid grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
+                        <div class="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center text-2xl">🏆</div>
+                        <div><p class="text-3xl font-bold text-gray-900">${stats.total}</p><p class="text-gray-500">总获奖数</p></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
+                        <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">🏛️</div>
+                        <div><p class="text-3xl font-bold text-gray-900">${stats.organizations}</p><p class="text-gray-500">获奖单位</p></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
+                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">🎖️</div>
+                        <div><p class="text-3xl font-bold text-gray-900">${stats.awardTypes}</p><p class="text-gray-500">奖项种类</p></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">奖项等级分布</h2>
+                        <canvas id="${chartId}"></canvas>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">历年获奖趋势</h2>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6 mt-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">获奖次数 Top 5</h2>
+                        ${this.getTopRecipients()}
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h2 class="text-lg font-bold text-gray-900 mb-4">获奖单位 Top 5</h2>
+                        ${this.getTopOrgs()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    getTopRecipients() {
+        const recipientMap = {};
+        mockData.forEach(a => {
+            (a.recipients || '').split(/[,，、]/).forEach(n => {
+                if (n.trim()) recipientMap[n.trim()] = (recipientMap[n.trim()] || 0) + 1;
+            });
+        });
+        return Object.entries(recipientMap).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([name, count], i) => `
+            <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i===0?'bg-red-500 text-white':i===1?'bg-orange-500 text-white':i===2?'bg-yellow-500 text-white':'bg-gray-200 text-gray-600'}">${i+1}</span>
+                <span class="flex-1 font-medium text-gray-900">${name}</span>
+                <span class="text-primary-600 font-bold">${count}次</span>
+            </div>
+        `).join('');
+    }
+    
+    getTopOrgs() {
+        const orgMap = {};
+        mockData.forEach(a => {
+            if (a.organization) orgMap[a.organization] = (orgMap[a.organization] || 0) + 1;
+        });
+        return Object.entries(orgMap).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([name, count], i) => `
+            <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i===0?'bg-red-500 text-white':i===1?'bg-orange-500 text-white':i===2?'bg-yellow-500 text-white':'bg-gray-200 text-gray-600'}">${i+1}</span>
+                <span class="flex-1 font-medium text-gray-900">${name}</span>
+                <span class="text-primary-600 font-bold">${count}次</span>
+            </div>
+        `).join('');
+    }
+    
+    initChart() {
+        if (store.currentPage !== 'statistics') return;
+        
+        const stats = this.getStats();
+        
+        // 饼图
+        const pieCtx = document.getElementById('statsChart');
+        if (pieCtx) {
+            new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['国家级', '省级', '市级', '校级'],
+                    datasets: [{
+                        data: [stats.national, stats.provincial, stats.municipal, stats.school],
+                        backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#22C55E']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+        
+        // 趋势图
+        const trendCtx = document.getElementById('trendChart');
+        if (trendCtx) {
+            const yearMap = {};
+            mockData.forEach(a => { yearMap[a.year] = (yearMap[a.year] || 0) + 1; });
+            const years = Object.keys(yearMap).sort();
+            
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: '获奖数量',
+                        data: years.map(y => yearMap[y]),
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+    }
+    
+    favoritesPage() {
+        const favAwards = mockData.filter(a => store.favorites.includes(a.id));
+        
+        return `
+            <div class="h-full overflow-y-auto p-8 fade-in">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="text-3xl">⭐</span>
+                    <h1 class="text-2xl font-bold text-gray-900">我的收藏</h1>
+                </div>
+                
+                ${!store.user ? `
+                    <div class="flex flex-col items-center justify-center h-64 text-gray-400">
+                        <p class="text-lg mb-4">请先登录</p>
+                        <button onclick="app.navigate('login')" class="bg-primary-500 text-white px-6 py-2 rounded-lg">去登录</button>
+                    </div>
+                ` : favAwards.length === 0 ? `
+                    <div class="flex flex-col items-center justify-center h-64 text-gray-400">
+                        <p class="text-6xl mb-4">📭</p>
+                        <p class="text-lg mb-2">暂无收藏</p>
+                        <p class="text-sm">去搜索并收藏感兴趣的获奖信息吧</p>
+                    </div>
+                ` : `
+                    <div class="grid gap-4">
+                        ${favAwards.map(a => `
+                            <div onclick="app.navigateToDetail(${a.id})" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md cursor-pointer relative">
+                                <button onclick="event.stopPropagation(); app.toggleFavorite(${a.id}); app.render();" 
+                                    class="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-50 rounded-lg">🗑️</button>
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="px-2 py-1 text-xs text-white rounded ${this.getLevelColor(a.level)}">${a.level}</span>
+                                            <span class="text-sm text-gray-500">${a.year}年</span>
+                                        </div>
+                                        <h3 class="text-lg font-medium text-gray-900 mb-1">${a.name}</h3>
+                                        <p class="text-primary-600 mb-2">${a.award_name}</p>
+                                        <p class="text-sm text-gray-500">${a.recipients} · ${a.organization}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+        `;
+    }
+    
+    adminPage() {
+        if (!store.user || !store.user.is_admin) {
+            return `
+                <div class="h-full flex flex-col items-center justify-center">
+                    <p class="text-gray-500 mb-4">您没有管理员权限</p>
+                    <button onclick="app.navigate('home')" class="bg-primary-500 text-white px-6 py-2 rounded-lg">返回首页</button>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="h-full flex flex-col fade-in">
+                <div class="bg-white border-b p-6">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-2xl font-bold text-gray-900">⚙️ 数据管理</h1>
+                        <div class="flex gap-4">
+                            <button onclick="app.importData()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">📥 导入数据</button>
+                            <button onclick="app.exportData()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">📤 导出数据</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">等级</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">成果名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">奖项名称</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">获奖人</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">单位</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">年份</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${mockData.map(a => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs text-white rounded ${this.getLevelColor(a.level)}">${a.level}</span></td>
+                                        <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">${a.name}</td>
+                                        <td class="px-6 py-4 text-sm text-primary-600">${a.award_name}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${a.recipients}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${a.organization}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">${a.year}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button onclick="app.navigateToDetail(${a.id})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">✏️</button>
+                                            <button onclick="app.deleteAward(${a.id})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg">🗑️</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    loginPage() {
+        return `
+            <div class="min-h-screen bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center p-8">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
+                    <div class="flex flex-col items-center mb-8">
+                        <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center text-4xl mb-4">🏆</div>
+                        <h1 class="text-2xl font-bold text-gray-900">科研奖励获奖信息查询系统</h1>
+                        <p class="text-gray-500 mt-2">登录后可使用收藏和管理功能</p>
+                    </div>
+                    <div id="login-error" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm mb-4"></div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                            <input type="text" id="login-username" placeholder="请输入用户名"
+                                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                            <input type="password" id="login-password" placeholder="请输入密码"
+                                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary-500"
+                                onkeypress="if(event.key==='Enter') app.handleLogin()">
+                        </div>
+                        <button onclick="app.handleLogin()" class="w-full bg-primary-500 text-white py-3 rounded-lg text-lg font-medium hover:bg-primary-600">
+                            登录
+                        </button>
+                    </div>
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600 font-medium mb-2">默认账户信息：</p>
+                        <p class="text-sm text-gray-500">用户名：admin</p>
+                        <p class="text-sm text-gray-500">密码：admin123</p>
+                        <p class="text-xs text-gray-400 mt-2">（管理员账户）</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    handleLogin() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const errorDiv = document.getElementById('login-error');
+        
+        if (!username || !password) {
+            errorDiv.textContent = '请输入用户名和密码';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        if (username === 'admin' && password === 'admin123') {
+            store.login({ id: 1, username: 'admin', nickname: '系统管理员', is_admin: true });
+            this.navigate('home');
+        } else if (username === 'user' && password === 'user123') {
+            store.login({ id: 2, username: 'user', nickname: '普通用户', is_admin: false });
+            this.navigate('home');
+        } else {
+            errorDiv.textContent = '用户名或密码错误';
+            errorDiv.classList.remove('hidden');
+        }
+    }
+    
+    handleLogout() {
+        store.logout();
+        this.render();
+    }
+    
+    navigateToDetail(id) { store.detailId = id; store.currentPage = 'detail'; this.render(); }
+    
+    importData() { alert('导入功能开发中，请手动添加数据或联系开发人员。'); }
+    exportData() { alert('导出功能开发中。'); }
+    deleteAward(id) { if (confirm('确定要删除这条获奖信息吗？')) { alert('删除功能开发中。'); } }
+}
+
+// 初始化应用
+const app = new App();
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@
     <title>科研奖励获奖信息查询系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans SC', sans-serif; }
@@ -656,7 +657,80 @@ class App {
     
     navigateToDetail(id) { store.detailId = id; store.currentPage = 'detail'; this.render(); }
     
-    importData() { alert('导入功能开发中，请手动添加数据或联系开发人员。'); }
+    importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.xlsx,.xls';
+            input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        let importedCount = 0;
+                        const errors: string[] = [];
+                        
+                        // 遍历所有 sheet
+                        workbook.SheetNames.forEach((sheetName, sheetIndex) => {
+                            const worksheet = workbook.Sheets[sheetName];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            
+                            // 跳过标题行（第一行）
+                            for (let i = 1; i < jsonData.length; i++) {
+                                const row = jsonData[i];
+                                if (!row || !row[0]) continue; // 跳过空行
+                                
+                                try {
+                                    const year = parseInt(row[0]) || new Date().getFullYear();
+                                    const awardName = row[1]?.toString() || '未命名奖项';
+                                    const recipients = row[2]?.toString().replace(/、/g, ',') || '';
+                                    const organization = row[3]?.toString().replace(/、/g, ',') || '';
+                                    
+                                    // 确定奖项等级
+                                    let level = '校级';
+                                    if (awardName.includes('国家')) level = '国家级';
+                                    else if (awardName.includes('省')) level = '省级';
+                                    else if (awardName.includes('市')) level = '市级';
+                                    
+                                    mockData.push({
+                                        id: mockData.length + 1,
+                                        name: awardName,
+                                        award_name: awardName,
+                                        category: '未分类',
+                                        level,
+                                        year,
+                                        session: null,
+                                        recipients,
+                                        organization,
+                                        department: '',
+                                        description: `来自表格: ${sheetName}，第${i+1}行`,
+                                        created_at: new Date().toISOString().split('T')[0]
+                                    });
+                                    importedCount++;
+                                } catch (e) {
+                                    errors.push(`Sheet ${sheetName} 第${i+1}行: ${(e as Error).message}`);
+                                }
+                            }
+                        });
+                        
+                        let message = `成功导入 ${importedCount} 条数据！`;
+                        if (errors.length > 0) {
+                            message += `\n\n导入失败 ${errors.length} 条：\n${errors.join('\n')}`;
+                        }
+                        alert(message);
+                        this.render();
+                    } catch (e) {
+                        alert(`导入失败: ${(e as Error).message}`);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            input.click();
+        }
     exportData() { alert('导出功能开发中。'); }
     deleteAward(id) { if (confirm('确定要删除这条获奖信息吗？')) { alert('删除功能开发中。'); } }
 }

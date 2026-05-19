@@ -12,13 +12,13 @@
         body { font-family: 'Noto Sans SC', sans-serif; }
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .level-national { background: #EF4444; }
-        .level-provincial { background: #F97316; }
-        .level-municipal { background: #EAB308; }
-        .level-school { background: #22C55E; }
+        .level-national { background: #DC2626; }
+        .level-provincial { background: #EA580C; }
+        .level-municipal { background: #CA8A04; }
+        .level-school { background: #059669; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-slate-50 min-h-screen">
     <div id="app"></div>
 
 <script>
@@ -50,7 +50,7 @@ const store = {
 
 // ==================== 工具函数 ====================
 const utils = {
-    getLevelColor(level) { return { '国家级': 'bg-red-500', '省级': 'bg-orange-500', '市级': 'bg-yellow-500', '校级': 'bg-green-500' }[level] || 'bg-gray-500'; },
+    getLevelColor(level) { return { '国家级': 'bg-red-600', '省级': 'bg-orange-600', '市级': 'bg-yellow-600', '校级': 'bg-emerald-600' }[level] || 'bg-slate-600'; },
     getStats() {
         const total = mockData.length;
         const national = mockData.filter(a => a.level === '国家级').length;
@@ -88,61 +88,112 @@ class App {
     render() {
         const container = document.getElementById('app');
         container.innerHTML = `
-            <div class="flex min-h-screen">
-                ${this.sidebar()}
-                <main class="flex-1 overflow-y-auto">${this.currentPage()}</main>
+            <div class="min-h-screen">
+                ${this.header()}
+                <div class="flex">
+                    ${this.sidebar()}
+                    <main class="flex-1 overflow-y-auto">${this.currentPage()}</main>
+                </div>
             </div>
         `;
         this.initChart();
+    }
+    
+    header() {
+        const user = store.user;
+        return `
+            <header class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-xl sticky top-0 z-50">
+                <div class="max-w-7xl mx-auto px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                                🏆
+                            </div>
+                            <div>
+                                <h1 class="text-xl font-bold bg-gradient-to-r from-white to-emerald-300 bg-clip-text text-transparent">
+                                    科研奖励获奖信息查询系统
+                                </h1>
+                                <p class="text-xs text-slate-400">Scientific Research Award Information System</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            ${user ? `
+                                <div class="flex items-center gap-3 bg-slate-800 px-4 py-2 rounded-xl border border-slate-700">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-base font-bold">
+                                        ${(user.nickname || user.username)[0]}
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="font-medium text-slate-100">${user.nickname || user.username}</p>
+                                        <p class="text-xs text-slate-400">${user.is_admin ? '系统管理员' : '普通用户'}</p>
+                                    </div>
+                                    <button onclick="app.handleLogout()" 
+                                        class="ml-2 px-3 py-1.5 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-all text-sm">
+                                        退出
+                                    </button>
+                                </div>
+                            ` : `
+                                <div class="flex items-center gap-3">
+                                    <button onclick="app.navigate('login')" 
+                                        class="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
+                                        登录
+                                    </button>
+                                    <button onclick="app.navigate('login')" 
+                                        class="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all">
+                                        立即体验
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            </header>
+        `;
     }
     
     sidebar() {
         const user = store.user;
         const isAdmin = user && user.is_admin;
         const navs = [
-            { id: 'home', label: '首页', icon: '🏠' },
-            { id: 'search', label: '搜索', icon: '🔍' },
-            { id: 'statistics', label: '统计', icon: '📊' },
-            { id: 'favorites', label: '收藏', icon: '⭐' },
-            ...(isAdmin ? [{ id: 'admin', label: '管理', icon: '⚙️' }] : [])
+            { id: 'home', label: '首页', icon: '🏠', desc: '系统概览' },
+            { id: 'search', label: '搜索查询', icon: '🔍', desc: '查找获奖信息' },
+            { id: 'statistics', label: '统计分析', icon: '📊', desc: '数据可视化' },
+            { id: 'favorites', label: '我的收藏', icon: '⭐', desc: '收藏的条目' },
+            ...(isAdmin ? [{ id: 'admin', label: '数据管理', icon: '⚙️', desc: '导入导出数据' }] : [])
         ];
         
         return `
-            <aside class="w-64 bg-white shadow-lg flex flex-col">
-                <div class="p-6 border-b">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center text-white font-bold">🏆</div>
-                        <div>
-                            <h1 class="font-bold text-gray-900">科研奖励</h1>
-                            <p class="text-xs text-gray-500">获奖信息查询</p>
-                        </div>
-                    </div>
-                </div>
-                <nav class="flex-1 p-4 space-y-1">
+            <aside class="w-64 bg-white border-r border-slate-200 min-h-[calc(100vh-73px)] flex flex-col shadow-sm">
+                <nav class="flex-1 p-4 space-y-2">
                     ${navs.map(nav => `
                         <div onclick="app.navigate('${nav.id}')" 
-                            class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${store.currentPage === nav.id ? 'bg-primary-50 text-primary-600' : 'text-gray-600 hover:bg-gray-100'}">
-                            <span>${nav.icon}</span>
-                            <span class="font-medium">${nav.label}</span>
+                            class="group flex items-center gap-4 px-4 py-4 rounded-xl cursor-pointer transition-all ${store.currentPage === nav.id 
+                                ? 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border border-emerald-200 shadow-sm' 
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'}">
+                            <div class="w-10 h-10 ${store.currentPage === nav.id 
+                                ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' 
+                                : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'} rounded-xl flex items-center justify-center text-xl transition-all">
+                                ${nav.icon}
+                            </div>
+                            <div>
+                                <p class="font-semibold">${nav.label}</p>
+                                <p class="text-xs text-slate-400">${nav.desc}</p>
+                            </div>
                         </div>
                     `).join('')}
                 </nav>
-                <div class="p-4 border-t">
-                    ${user ? `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-medium">${(user.nickname || user.username)[0]}</div>
-                                <div>
-                                    <p class="font-medium text-gray-900">${user.nickname || user.username}</p>
-                                    <p class="text-xs text-gray-500">${user.is_admin ? '管理员' : '用户'}</p>
-                                </div>
-                            </div>
-                            <button onclick="app.handleLogout()" class="p-2 text-gray-400 hover:text-red-500">🚪</button>
+                
+                ${!user ? `
+                    <div class="p-4 border-t border-slate-200 bg-slate-50">
+                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-100">
+                            <p class="text-sm font-medium text-slate-800 mb-2">🔒 解锁完整功能</p>
+                            <p class="text-xs text-slate-500 mb-4">登录后可使用收藏和数据管理功能</p>
+                            <button onclick="app.navigate('login')" 
+                                class="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all">
+                                登录账户
+                            </button>
                         </div>
-                    ` : `
-                        <button onclick="app.navigate('login')" class="w-full bg-primary-500 text-white py-2 rounded-lg hover:bg-primary-600">登录</button>
-                    `}
-                </div>
+                    </div>
+                ` : ''}
             </aside>
         `;
     }
@@ -165,74 +216,133 @@ class App {
         const hotAwards = mockData.slice(0, 5);
         
         return `
-            <div class="p-8 fade-in">
-                <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-white mb-8">
-                    <h1 class="text-3xl font-bold mb-2">科研奖励获奖信息查询系统</h1>
-                    <p class="text-primary-100 mb-6">一站式查询科研获奖成果，支持多维度搜索和统计分析</p>
-                    <div class="flex gap-4 max-w-2xl">
-                        <div class="flex-1 relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                            <input type="text" id="home-search" placeholder="请输入姓名、单位、成果名称或奖项名称"
-                                class="w-full pl-12 pr-4 py-3 rounded-xl text-gray-900 outline-none"
-                                onkeypress="if(event.key==='Enter') app.search(this.value)">
+            <div class="p-8 fade-in max-w-7xl mx-auto">
+                <!-- Hero Section -->
+                <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-10 text-white mb-10 shadow-2xl">
+                    <div class="flex items-start justify-between">
+                        <div class="max-w-2xl">
+                            <h2 class="text-3xl font-bold mb-4">
+                                欢迎使用科研奖励查询系统
+                            </h2>
+                            <p class="text-slate-300 text-lg mb-8 leading-relaxed">
+                                一站式查询各类科研获奖成果，支持多维度搜索、统计分析和数据可视化
+                            </p>
+                            <div class="flex gap-4">
+                                <div class="flex-1 relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">🔍</span>
+                                    <input type="text" id="home-search" placeholder="搜索获奖者、单位、奖项或成果名称..."
+                                        class="w-full pl-12 pr-4 py-4 rounded-2xl text-slate-900 outline-none shadow-lg focus:ring-4 focus:ring-emerald-500/30 text-base"
+                                        onkeypress="if(event.key==='Enter') app.search(this.value)">
+                                </div>
+                                <button onclick="app.search(document.getElementById('home-search').value)" 
+                                    class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all">
+                                    开始搜索
+                                </button>
+                            </div>
+                            <div class="flex gap-3 mt-6 flex-wrap">
+                                ${['国家级', '省级', '市级', '2024年', '2023年'].map(f => `
+                                    <button onclick="app.search('${f}')" 
+                                        class="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur rounded-xl text-sm transition-all border border-white/10">
+                                        ${f}
+                                    </button>
+                                `).join('')}
+                            </div>
                         </div>
-                        <button onclick="app.search(document.getElementById('home-search').value)" 
-                            class="px-8 py-3 bg-white text-primary-600 rounded-xl font-medium hover:bg-gray-50">
-                            搜索
-                        </button>
-                    </div>
-                    <div class="flex gap-3 mt-4">
-                        ${['国家级', '省级', '市级', '2024年', '2023年'].map(f => 
-                            `<button onclick="app.search('${f}')" class="px-4 py-2 bg-white/20 rounded-lg text-sm hover:bg-white/30">${f}</button>`
-                        ).join('')}
+                        <div class="hidden lg:block">
+                            <div class="text-8xl opacity-20">🏆</div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-6 mb-8">
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4 cursor-pointer" onclick="app.navigate('statistics')">
-                        <div class="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center text-2xl">🏆</div>
-                        <div><p class="text-2xl font-bold text-gray-900">${stats.total}</p><p class="text-gray-500">总获奖数</p></div>
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100 hover:shadow-xl transition-all cursor-pointer" onclick="app.navigate('statistics')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                🏆
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold text-slate-800">${stats.total}</p>
+                                <p class="text-slate-500 text-sm">总获奖数</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">🏛️</div>
-                        <div><p class="text-2xl font-bold text-gray-900">${stats.organizations}</p><p class="text-gray-500">获奖单位</p></div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100 hover:shadow-xl transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                🏛️
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold text-slate-800">${stats.organizations}</p>
+                                <p class="text-slate-500 text-sm">获奖单位</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">🎖️</div>
-                        <div><p class="text-2xl font-bold text-gray-900">${stats.awardTypes}</p><p class="text-gray-500">奖项种类</p></div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100 hover:shadow-xl transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                🎖️
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold text-slate-800">${stats.awardTypes}</p>
+                                <p class="text-slate-500 text-sm">奖项种类</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4 cursor-pointer" onclick="app.navigate('statistics')">
-                        <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">📈</div>
-                        <div><p class="text-lg font-bold text-gray-900">查看统计</p><p class="text-gray-500">详细分析</p></div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100 hover:shadow-xl transition-all cursor-pointer" onclick="app.navigate('statistics')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                📈
+                            </div>
+                            <div>
+                                <p class="text-lg font-bold text-slate-800">查看统计</p>
+                                <p class="text-slate-500 text-sm">详细数据分析</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-8">
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-xl font-bold text-gray-900 mb-4">热门奖项</h2>
-                        <div class="space-y-4">
+                <!-- Main Content -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Hot Awards -->
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                🔥 热门获奖
+                            </h3>
+                        </div>
+                        <div class="p-4 space-y-3">
                             ${hotAwards.map(a => `
-                                <div onclick="app.navigateToDetail(${a.id})" class="flex items-start gap-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
-                                    <div class="w-2 h-12 rounded-full ${this.getLevelColor(a.level)}"></div>
+                                <div onclick="app.navigateToDetail(${a.id})" 
+                                    class="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 cursor-pointer transition-all border border-transparent hover:border-slate-200">
+                                    <div class="w-2 h-14 rounded-full ${this.getLevelColor(a.level)} flex-shrink-0"></div>
                                     <div class="flex-1 min-w-0">
-                                        <h3 class="font-medium text-gray-900 truncate">${a.name}</h3>
-                                        <p class="text-sm text-primary-600">${a.award_name}</p>
-                                        <p class="text-sm text-gray-500">${a.recipients} · ${a.year}年</p>
+                                        <h4 class="font-semibold text-slate-800 truncate">${a.name}</h4>
+                                        <p class="text-emerald-600 text-sm font-medium mt-1">${a.award_name}</p>
+                                        <p class="text-slate-500 text-sm mt-1">${a.recipients} · ${a.year}年</p>
                                     </div>
+                                    <div class="text-slate-400 text-xl">›</div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-xl font-bold text-gray-900 mb-4">最新获奖</h2>
-                        <div class="space-y-4">
+                    
+                    <!-- Recent Awards -->
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                        <div class="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                📋 最新获奖
+                            </h3>
+                        </div>
+                        <div class="p-4 space-y-3">
                             ${[...mockData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5).map(a => `
-                                <div onclick="app.navigateToDetail(${a.id})" class="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                                <div onclick="app.navigateToDetail(${a.id})" 
+                                    class="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 cursor-pointer transition-all border border-transparent hover:border-slate-200">
                                     <div class="flex-1 min-w-0">
-                                        <h3 class="font-medium text-gray-900 truncate">${a.name}</h3>
-                                        <p class="text-sm text-gray-500">${a.award_name} · ${a.recipients}</p>
+                                        <h4 class="font-semibold text-slate-800 truncate">${a.name}</h4>
+                                        <p class="text-slate-500 text-sm mt-1">${a.award_name} · ${a.recipients}</p>
                                     </div>
-                                    <span class="text-gray-400">›</span>
+                                    <span class="text-slate-400 text-xl">›</span>
                                 </div>
                             `).join('')}
                         </div>
@@ -247,48 +357,69 @@ class App {
         
         return `
             <div class="h-full flex flex-col fade-in">
-                <div class="bg-white border-b p-6">
-                    <div class="flex gap-4 max-w-3xl mb-4">
-                        <div class="flex-1 relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                            <input type="text" id="search-input" placeholder="搜索姓名、单位、成果名称或奖项名称"
-                                class="w-full pl-12 pr-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-primary-500"
-                                value="${store.searchKeyword}" onkeypress="if(event.key==='Enter') app.search(this.value)">
+                <div class="bg-white border-b border-slate-200 p-6 shadow-sm">
+                    <div class="max-w-5xl mx-auto">
+                        <div class="flex gap-4 mb-6">
+                            <div class="flex-1 relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl">🔍</span>
+                                <input type="text" id="search-input" placeholder="搜索获奖者、单位、成果名称或奖项..."
+                                    class="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-slate-200 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all text-base"
+                                    value="${store.searchKeyword}" onkeypress="if(event.key==='Enter') app.search(this.value)">
+                            </div>
+                            <button onclick="app.search(document.getElementById('search-input').value)" 
+                                class="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                                搜索
+                            </button>
                         </div>
-                        <button onclick="app.search(document.getElementById('search-input').value)" class="px-6 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600">搜索</button>
-                    </div>
-                    <div class="flex gap-2">
-                        ${['全部', '国家级', '省级', '市级', '校级'].map(l => `
-                            <button onclick="app.search('${l === '全部' ? '' : l}')" 
-                                class="px-4 py-2 rounded-lg text-sm ${!store.searchKeyword || store.searchKeyword === l ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600'}">${l}</button>
-                        `).join('')}
+                        <div class="flex gap-3 flex-wrap">
+                            ${['全部', '国家级', '省级', '市级', '校级'].map(l => `
+                                <button onclick="app.search('${l === '全部' ? '' : l}')" 
+                                    class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${!store.searchKeyword || store.searchKeyword === l 
+                                        ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md' 
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                                    ${l}
+                                </button>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
-                <div class="flex-1 overflow-y-auto p-6">
-                    <p class="mb-4 text-gray-500">共找到 <span class="font-medium text-gray-900">${results.length}</span> 条结果</p>
-                    <div class="grid gap-4">
-                        ${results.length === 0 ? `
-                            <div class="flex flex-col items-center justify-center h-64 text-gray-400">
-                                <p class="text-6xl mb-4">🔍</p>
-                                <p class="text-lg">暂无搜索结果</p>
-                            </div>
-                        ` : results.map(a => `
-                            <div onclick="app.navigateToDetail(${a.id})" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md cursor-pointer">
-                                <div class="flex items-start justify-between">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-3 mb-2">
-                                            <span class="px-2 py-1 text-xs text-white rounded ${this.getLevelColor(a.level)}">${a.level}</span>
-                                            <span class="text-sm text-gray-500">${a.year}年</span>
-                                        </div>
-                                        <h3 class="text-lg font-medium text-gray-900 mb-1">${a.name}</h3>
-                                        <p class="text-primary-600 mb-2">${a.award_name}</p>
-                                        <p class="text-sm text-gray-500">获奖人: ${a.recipients}</p>
-                                        <p class="text-sm text-gray-500">获奖单位: ${a.organization}</p>
-                                    </div>
-                                    <span class="text-gray-400 text-2xl">›</span>
+                <div class="flex-1 overflow-y-auto p-8">
+                    <div class="max-w-5xl mx-auto">
+                        <p class="mb-6 text-slate-600 font-medium">
+                            共找到 <span class="text-emerald-600 text-xl font-bold">${results.length}</span> 条结果
+                        </p>
+                        <div class="space-y-4">
+                            ${results.length === 0 ? `
+                                <div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                                    <p class="text-7xl mb-6">🔍</p>
+                                    <p class="text-xl mb-2">暂无搜索结果</p>
+                                    <p class="text-slate-500">试试其他关键词</p>
                                 </div>
-                            </div>
-                        `).join('')}
+                            ` : results.map(a => `
+                                <div onclick="app.navigateToDetail(${a.id})" 
+                                    class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 hover:shadow-xl cursor-pointer transition-all hover:border-slate-200">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-3">
+                                                <span class="px-3 py-1 text-xs font-bold text-white rounded-full ${this.getLevelColor(a.level)}">
+                                                    ${a.level}
+                                                </span>
+                                                <span class="text-sm text-slate-500 font-medium">${a.year}年</span>
+                                            </div>
+                                            <h3 class="text-xl font-bold text-slate-800 mb-2">${a.name}</h3>
+                                            <p class="text-emerald-600 font-semibold mb-3">${a.award_name}</p>
+                                            <p class="text-slate-600 text-sm">
+                                                <span class="font-medium text-slate-700">获奖人：</span>${a.recipients}
+                                            </p>
+                                            <p class="text-slate-600 text-sm mt-1">
+                                                <span class="font-medium text-slate-700">获奖单位：</span>${a.organization}
+                                            </p>
+                                        </div>
+                                        <div class="text-slate-400 text-3xl">›</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -302,59 +433,91 @@ class App {
         
         return `
             <div class="h-full overflow-y-auto p-8 fade-in">
-                <button onclick="app.navigate('search')" class="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6">
-                    ← 返回
-                </button>
-                <div class="max-w-4xl">
-                    <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-white mb-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="px-3 py-1 text-sm rounded-full ${this.getLevelColor(award.level)}">${award.level}</span>
-                            <span class="text-primary-100">${award.year}年</span>
-                            ${award.session ? `<span class="text-primary-100">第${award.session}届</span>` : ''}
+                <div class="max-w-4xl mx-auto">
+                    <button onclick="app.navigate('search')" 
+                        class="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 px-4 py-2 rounded-lg hover:bg-slate-100 transition-all">
+                        ← 返回
+                    </button>
+                    
+                    <!-- Hero Card -->
+                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-10 text-white mb-8 shadow-2xl">
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="px-4 py-1.5 text-sm font-bold rounded-full ${this.getLevelColor(award.level)}">
+                                ${award.level}
+                            </span>
+                            <span class="text-slate-300 text-lg">${award.year}年</span>
+                            ${award.session ? `<span class="text-slate-300 text-lg">第${award.session}届</span>` : ''}
                         </div>
-                        <h1 class="text-2xl font-bold mb-2">${award.name}</h1>
-                        <p class="text-primary-100">${award.award_name}</p>
+                        <h1 class="text-3xl font-bold mb-3">${award.name}</h1>
+                        <p class="text-emerald-300 text-xl">${award.award_name}</p>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-6 mb-6">
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h2 class="text-lg font-bold text-gray-900 mb-4">获奖信息</h2>
-                            <div class="space-y-4">
-                                <div class="flex items-start gap-3">
-                                    <span class="text-gray-400">👤</span>
-                                    <div><p class="text-sm text-gray-500">获奖人</p><p class="font-medium text-gray-900">${award.recipients}</p></div>
+                    <!-- Info Cards -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                📋 获奖信息
+                            </h2>
+                            <div class="space-y-5">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xl">👤</div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 mb-1">获奖人</p>
+                                        <p class="font-semibold text-slate-800 text-lg">${award.recipients}</p>
+                                    </div>
                                 </div>
-                                <div class="flex items-start gap-3">
-                                    <span class="text-gray-400">🏛️</span>
-                                    <div><p class="text-sm text-gray-500">获奖单位</p><p class="font-medium text-gray-900">${award.organization}</p></div>
+                                <div class="flex items-start gap-4">
+                                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xl">🏛️</div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 mb-1">获奖单位</p>
+                                        <p class="font-semibold text-slate-800 text-lg">${award.organization}</p>
+                                    </div>
                                 </div>
                                 ${award.department ? `
-                                <div class="flex items-start gap-3">
-                                    <span class="text-gray-400">🎖️</span>
-                                    <div><p class="text-sm text-gray-500">获奖部门</p><p class="font-medium text-gray-900">${award.department}</p></div>
-                                </div>` : ''}
-                                <div class="flex items-start gap-3">
-                                    <span class="text-gray-400">📅</span>
-                                    <div><p class="text-sm text-gray-500">奖项类别</p><p class="font-medium text-gray-900">${award.category || '未分类'}</p></div>
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xl">🎖️</div>
+                                        <div>
+                                            <p class="text-sm text-slate-500 mb-1">获奖部门</p>
+                                            <p class="font-semibold text-slate-800 text-lg">${award.department}</p>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <div class="flex items-start gap-4">
+                                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-xl">📅</div>
+                                    <div>
+                                        <p class="text-sm text-slate-500 mb-1">奖项类别</p>
+                                        <p class="font-semibold text-slate-800 text-lg">${award.category || '未分类'}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h2 class="text-lg font-bold text-gray-900 mb-4">时间信息</h2>
-                            <div class="space-y-4">
-                                <div><p class="text-sm text-gray-500">创建时间</p><p class="font-medium text-gray-900">${utils.formatDate(award.created_at)}</p></div>
+                        
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                ⏰ 时间信息
+                            </h2>
+                            <div class="space-y-5">
+                                <div>
+                                    <p class="text-sm text-slate-500 mb-1">创建时间</p>
+                                    <p class="font-semibold text-slate-800 text-lg">${utils.formatDate(award.created_at)}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     ${award.description ? `
-                    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-                        <h2 class="text-lg font-bold text-gray-900 mb-4">📝 成果描述</h2>
-                        <p class="text-gray-600 leading-relaxed">${award.description}</p>
-                    </div>` : ''}
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7 mb-8">
+                            <h2 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
+                                📝 成果描述
+                            </h2>
+                            <p class="text-slate-700 leading-relaxed text-lg">${award.description}</p>
+                        </div>
+                    ` : ''}
                     
                     <button onclick="app.toggleFavorite(${award.id})" 
-                        class="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${isFav ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                        class="flex items-center gap-3 px-7 py-4 rounded-2xl font-semibold transition-all shadow-lg ${isFav 
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700' 
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
                         ${isFav ? '⭐ 已收藏' : '☆ 收藏'}
                     </button>
                 </div>
@@ -364,46 +527,90 @@ class App {
     
     statisticsPage() {
         const stats = this.getStats();
-        const chartId = 'statsChart';
         
         return `
             <div class="h-full overflow-y-auto p-8 fade-in">
-                <h1 class="text-2xl font-bold text-gray-900 mb-6">📊 统计分析</h1>
-                
-                <div class="grid grid-cols-3 gap-6 mb-6">
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div class="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center text-2xl">🏆</div>
-                        <div><p class="text-3xl font-bold text-gray-900">${stats.total}</p><p class="text-gray-500">总获奖数</p></div>
+                <div class="max-w-6xl mx-auto">
+                    <h1 class="text-3xl font-bold text-slate-800 mb-8 flex items-center gap-3">
+                        📊 统计分析
+                    </h1>
+                    
+                    <!-- Stats Overview -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                    🏆
+                                </div>
+                                <div>
+                                    <p class="text-3xl font-bold text-slate-800">${stats.total}</p>
+                                    <p class="text-slate-500">总获奖数</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                    🏛️
+                                </div>
+                                <div>
+                                    <p class="text-3xl font-bold text-slate-800">${stats.organizations}</p>
+                                    <p class="text-slate-500">获奖单位</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                    🎖️
+                                </div>
+                                <div>
+                                    <p class="text-3xl font-bold text-slate-800">${stats.awardTypes}</p>
+                                    <p class="text-slate-500">奖项种类</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                                    📈
+                                </div>
+                                <div>
+                                    <p class="text-3xl font-bold text-slate-800">
+                                        ${(stats.national / stats.total * 100).toFixed(0)}%
+                                    </p>
+                                    <p class="text-slate-500">国家级占比</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">🏛️</div>
-                        <div><p class="text-3xl font-bold text-gray-900">${stats.organizations}</p><p class="text-gray-500">获奖单位</p></div>
+                    
+                    <!-- Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6">📊 奖项等级分布</h2>
+                            <canvas id="statsChart" height="280"></canvas>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6">📈 历年获奖趋势</h2>
+                            <canvas id="trendChart" height="280"></canvas>
+                        </div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
-                        <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">🎖️</div>
-                        <div><p class="text-3xl font-bold text-gray-900">${stats.awardTypes}</p><p class="text-gray-500">奖项种类</p></div>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-lg font-bold text-gray-900 mb-4">奖项等级分布</h2>
-                        <canvas id="${chartId}"></canvas>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-lg font-bold text-gray-900 mb-4">历年获奖趋势</h2>
-                        <canvas id="trendChart"></canvas>
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-6 mt-6">
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-lg font-bold text-gray-900 mb-4">获奖次数 Top 5</h2>
-                        ${this.getTopRecipients()}
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h2 class="text-lg font-bold text-gray-900 mb-4">获奖单位 Top 5</h2>
-                        ${this.getTopOrgs()}
+                    
+                    <!-- Top Lists -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6">🏅 获奖次数 Top 5</h2>
+                            <div class="space-y-3">
+                                ${this.getTopRecipients()}
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-7">
+                            <h2 class="text-lg font-bold text-slate-800 mb-6">🏛️ 获奖单位 Top 5</h2>
+                            <div class="space-y-3">
+                                ${this.getTopOrgs()}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -417,13 +624,18 @@ class App {
                 if (n.trim()) recipientMap[n.trim()] = (recipientMap[n.trim()] || 0) + 1;
             });
         });
-        return Object.entries(recipientMap).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([name, count], i) => `
-            <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i===0?'bg-red-500 text-white':i===1?'bg-orange-500 text-white':i===2?'bg-yellow-500 text-white':'bg-gray-200 text-gray-600'}">${i+1}</span>
-                <span class="flex-1 font-medium text-gray-900">${name}</span>
-                <span class="text-primary-600 font-bold">${count}次</span>
-            </div>
-        `).join('');
+        return Object.entries(recipientMap).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([name, count], i) => {
+            const colors = ['from-red-500 to-rose-600', 'from-orange-500 to-amber-600', 'from-yellow-500 to-lime-600', 'from-slate-400 to-slate-500', 'from-slate-300 to-slate-400'];
+            return `
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="w-10 h-10 bg-gradient-to-br ${colors[i]} rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md">
+                        ${i + 1}
+                    </div>
+                    <span class="flex-1 font-semibold text-slate-800">${name}</span>
+                    <span class="text-emerald-600 font-bold text-lg">${count}次</span>
+                </div>
+            `;
+        }).join('');
     }
     
     getTopOrgs() {
@@ -431,13 +643,18 @@ class App {
         mockData.forEach(a => {
             if (a.organization) orgMap[a.organization] = (orgMap[a.organization] || 0) + 1;
         });
-        return Object.entries(orgMap).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([name, count], i) => `
-            <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <span class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i===0?'bg-red-500 text-white':i===1?'bg-orange-500 text-white':i===2?'bg-yellow-500 text-white':'bg-gray-200 text-gray-600'}">${i+1}</span>
-                <span class="flex-1 font-medium text-gray-900">${name}</span>
-                <span class="text-primary-600 font-bold">${count}次</span>
-            </div>
-        `).join('');
+        return Object.entries(orgMap).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([name, count], i) => {
+            const colors = ['from-red-500 to-rose-600', 'from-orange-500 to-amber-600', 'from-yellow-500 to-lime-600', 'from-slate-400 to-slate-500', 'from-slate-300 to-slate-400'];
+            return `
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="w-10 h-10 bg-gradient-to-br ${colors[i]} rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md">
+                        ${i + 1}
+                    </div>
+                    <span class="flex-1 font-semibold text-slate-800">${name}</span>
+                    <span class="text-emerald-600 font-bold text-lg">${count}次</span>
+                </div>
+            `;
+        }).join('');
     }
     
     initChart() {
@@ -445,7 +662,7 @@ class App {
         
         const stats = this.getStats();
         
-        // 饼图
+        // Pie Chart
         const pieCtx = document.getElementById('statsChart');
         if (pieCtx) {
             new Chart(pieCtx, {
@@ -454,14 +671,20 @@ class App {
                     labels: ['国家级', '省级', '市级', '校级'],
                     datasets: [{
                         data: [stats.national, stats.provincial, stats.municipal, stats.school],
-                        backgroundColor: ['#EF4444', '#F97316', '#EAB308', '#22C55E']
+                        backgroundColor: ['#DC2626', '#EA580C', '#CA8A04', '#059669'],
+                        borderWidth: 0
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 20, font: { size: 14 } } }
+                    }
+                }
             });
         }
         
-        // 趋势图
+        // Trend Chart
         const trendCtx = document.getElementById('trendChart');
         if (trendCtx) {
             const yearMap = {};
@@ -475,13 +698,24 @@ class App {
                     datasets: [{
                         label: '获奖数量',
                         data: years.map(y => yearMap[y]),
-                        borderColor: '#10B981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        borderWidth: 3,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointBackgroundColor: '#059669',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
             });
         }
     }
@@ -491,43 +725,65 @@ class App {
         
         return `
             <div class="h-full overflow-y-auto p-8 fade-in">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="text-3xl">⭐</span>
-                    <h1 class="text-2xl font-bold text-gray-900">我的收藏</h1>
-                </div>
-                
-                ${!store.user ? `
-                    <div class="flex flex-col items-center justify-center h-64 text-gray-400">
-                        <p class="text-lg mb-4">请先登录</p>
-                        <button onclick="app.navigate('login')" class="bg-primary-500 text-white px-6 py-2 rounded-lg">去登录</button>
+                <div class="max-w-5xl mx-auto">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                            ⭐
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-800">我的收藏</h1>
+                            <p class="text-slate-500 mt-1">共收藏 ${favAwards.length} 条</p>
+                        </div>
                     </div>
-                ` : favAwards.length === 0 ? `
-                    <div class="flex flex-col items-center justify-center h-64 text-gray-400">
-                        <p class="text-6xl mb-4">📭</p>
-                        <p class="text-lg mb-2">暂无收藏</p>
-                        <p class="text-sm">去搜索并收藏感兴趣的获奖信息吧</p>
-                    </div>
-                ` : `
-                    <div class="grid gap-4">
-                        ${favAwards.map(a => `
-                            <div onclick="app.navigateToDetail(${a.id})" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md cursor-pointer relative">
-                                <button onclick="event.stopPropagation(); app.toggleFavorite(${a.id}); app.render();" 
-                                    class="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-50 rounded-lg">🗑️</button>
-                                <div class="flex items-start justify-between">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-3 mb-2">
-                                            <span class="px-2 py-1 text-xs text-white rounded ${this.getLevelColor(a.level)}">${a.level}</span>
-                                            <span class="text-sm text-gray-500">${a.year}年</span>
+                    
+                    ${!store.user ? `
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-12 text-center">
+                            <p class="text-7xl mb-6">🔒</p>
+                            <p class="text-xl text-slate-600 mb-6">请先登录</p>
+                            <button onclick="app.navigate('login')" 
+                                class="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                                去登录
+                            </button>
+                        </div>
+                    ` : favAwards.length === 0 ? `
+                        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-12 text-center">
+                            <p class="text-7xl mb-6">📭</p>
+                            <p class="text-xl text-slate-600 mb-3">暂无收藏</p>
+                            <p class="text-slate-500 mb-6">去搜索并收藏感兴趣的获奖信息吧</p>
+                            <button onclick="app.navigate('search')" 
+                                class="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                                去搜索
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="space-y-4">
+                            ${favAwards.map(a => `
+                                <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 hover:shadow-xl cursor-pointer transition-all group relative"
+                                    onclick="app.navigateToDetail(${a.id})">
+                                    <button onclick="event.stopPropagation(); app.toggleFavorite(${a.id}); app.render();" 
+                                        class="absolute top-4 right-4 p-3 text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                        🗑️
+                                    </button>
+                                    <div class="flex items-start justify-between pr-12">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3 mb-3">
+                                                <span class="px-3 py-1 text-xs font-bold text-white rounded-full ${this.getLevelColor(a.level)}">
+                                                    ${a.level}
+                                                </span>
+                                                <span class="text-sm text-slate-500 font-medium">${a.year}年</span>
+                                            </div>
+                                            <h3 class="text-xl font-bold text-slate-800 mb-2 group-hover:text-emerald-600 transition-colors">
+                                                ${a.name}
+                                            </h3>
+                                            <p class="text-emerald-600 font-semibold mb-3">${a.award_name}</p>
+                                            <p class="text-slate-600">${a.recipients} · ${a.organization}</p>
                                         </div>
-                                        <h3 class="text-lg font-medium text-gray-900 mb-1">${a.name}</h3>
-                                        <p class="text-primary-600 mb-2">${a.award_name}</p>
-                                        <p class="text-sm text-gray-500">${a.recipients} · ${a.organization}</p>
                                     </div>
                                 </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `}
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
             </div>
         `;
     }
@@ -535,55 +791,84 @@ class App {
     adminPage() {
         if (!store.user || !store.user.is_admin) {
             return `
-                <div class="h-full flex flex-col items-center justify-center">
-                    <p class="text-gray-500 mb-4">您没有管理员权限</p>
-                    <button onclick="app.navigate('home')" class="bg-primary-500 text-white px-6 py-2 rounded-lg">返回首页</button>
+                <div class="h-full flex flex-col items-center justify-center p-8">
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-12 text-center">
+                        <p class="text-6xl mb-6">🔒</p>
+                        <p class="text-xl text-slate-600 mb-6">您没有管理员权限</p>
+                        <button onclick="app.navigate('home')" 
+                            class="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                            返回首页
+                        </button>
+                    </div>
                 </div>
             `;
         }
         
         return `
             <div class="h-full flex flex-col fade-in">
-                <div class="bg-white border-b p-6">
-                    <div class="flex items-center justify-between">
-                        <h1 class="text-2xl font-bold text-gray-900">⚙️ 数据管理</h1>
+                <div class="bg-white border-b border-slate-200 p-6 shadow-sm">
+                    <div class="max-w-6xl mx-auto flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                                ⚙️ 数据管理
+                            </h1>
+                            <p class="text-slate-500 mt-1">导入、导出和管理获奖数据</p>
+                        </div>
                         <div class="flex gap-4">
-                            <button onclick="app.importData()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">📥 导入数据</button>
-                            <button onclick="app.exportData()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">📤 导出数据</button>
+                            <button onclick="app.importData()" 
+                                class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                                📥 导入数据
+                            </button>
+                            <button onclick="app.exportData()" 
+                                class="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
+                                📤 导出数据
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="flex-1 overflow-y-auto p-6">
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">等级</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">成果名称</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">奖项名称</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">获奖人</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">单位</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">年份</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${mockData.map(a => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs text-white rounded ${this.getLevelColor(a.level)}">${a.level}</span></td>
-                                        <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">${a.name}</td>
-                                        <td class="px-6 py-4 text-sm text-primary-600">${a.award_name}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${a.recipients}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${a.organization}</td>
-                                        <td class="px-6 py-4 text-sm text-gray-500">${a.year}</td>
-                                        <td class="px-6 py-4 text-right">
-                                            <button onclick="app.navigateToDetail(${a.id})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">✏️</button>
-                                            <button onclick="app.deleteAward(${a.id})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg">🗑️</button>
-                                        </td>
+                <div class="flex-1 overflow-y-auto p-8">
+                    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">等级</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">成果名称</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">奖项名称</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">获奖人</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">单位</th>
+                                        <th class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">年份</th>
+                                        <th class="px-6 py-4 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">操作</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${mockData.map(a => `
+                                        <tr class="hover:bg-slate-50 transition-colors">
+                                            <td class="px-6 py-4">
+                                                <span class="px-3 py-1 text-xs font-bold text-white rounded-full ${this.getLevelColor(a.level)}">
+                                                    ${a.level}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm font-medium text-slate-800 max-w-xs truncate">${a.name}</td>
+                                            <td class="px-6 py-4 text-sm text-emerald-600 font-medium">${a.award_name}</td>
+                                            <td class="px-6 py-4 text-sm text-slate-600">${a.recipients}</td>
+                                            <td class="px-6 py-4 text-sm text-slate-600">${a.organization}</td>
+                                            <td class="px-6 py-4 text-sm text-slate-600">${a.year}</td>
+                                            <td class="px-6 py-4 text-right">
+                                                <button onclick="app.navigateToDetail(${a.id})" 
+                                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all mr-2">
+                                                    ✏️
+                                                </button>
+                                                <button onclick="app.deleteAward(${a.id})" 
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                                                    🗑️
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -592,35 +877,50 @@ class App {
     
     loginPage() {
         return `
-            <div class="min-h-screen bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center p-8">
-                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
-                    <div class="flex flex-col items-center mb-8">
-                        <div class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center text-4xl mb-4">🏆</div>
-                        <h1 class="text-2xl font-bold text-gray-900">科研奖励获奖信息查询系统</h1>
-                        <p class="text-gray-500 mt-2">登录后可使用收藏和管理功能</p>
-                    </div>
-                    <div id="login-error" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm mb-4"></div>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
-                            <input type="text" id="login-username" placeholder="请输入用户名"
-                                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary-500">
+            <div class="min-h-[calc(100vh-73px)] bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 flex items-center justify-center p-8">
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-10 text-center">
+                        <div class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center text-5xl mx-auto mb-6 shadow-xl">
+                            🏆
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
-                            <input type="password" id="login-password" placeholder="请输入密码"
-                                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary-500"
-                                onkeypress="if(event.key==='Enter') app.handleLogin()">
-                        </div>
-                        <button onclick="app.handleLogin()" class="w-full bg-primary-500 text-white py-3 rounded-lg text-lg font-medium hover:bg-primary-600">
-                            登录
-                        </button>
+                        <h1 class="text-2xl font-bold text-white mb-2">登录账户</h1>
+                        <p class="text-slate-300">登录后可使用完整功能</p>
                     </div>
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <p class="text-sm text-gray-600 font-medium mb-2">默认账户信息：</p>
-                        <p class="text-sm text-gray-500">用户名：admin</p>
-                        <p class="text-sm text-gray-500">密码：admin123</p>
-                        <p class="text-xs text-gray-400 mt-2">（管理员账户）</p>
+                    
+                    <div class="p-10">
+                        <div id="login-error" class="hidden p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm mb-6"></div>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">用户名</label>
+                                <input type="text" id="login-username" placeholder="请输入用户名"
+                                    class="w-full px-5 py-4 border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all text-base">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">密码</label>
+                                <input type="password" id="login-password" placeholder="请输入密码"
+                                    class="w-full px-5 py-4 border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all text-base"
+                                    onkeypress="if(event.key==='Enter') app.handleLogin()">
+                            </div>
+                            <button onclick="app.handleLogin()" 
+                                class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all text-lg">
+                                登录
+                            </button>
+                        </div>
+                        
+                        <div class="mt-8 p-6 bg-gradient-to-br from-slate-50 to-emerald-50 rounded-2xl border border-slate-100">
+                            <p class="text-sm font-semibold text-slate-800 mb-4">📋 默认账户信息：</p>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white p-4 rounded-xl border border-slate-100">
+                                    <p class="text-xs text-slate-500 mb-1">管理员</p>
+                                    <p class="font-semibold text-slate-800 text-sm">admin / admin123</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-xl border border-slate-100">
+                                    <p class="text-xs text-slate-500 mb-1">普通用户</p>
+                                    <p class="font-semibold text-slate-800 text-sm">user / user123</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -658,79 +958,77 @@ class App {
     navigateToDetail(id) { store.detailId = id; store.currentPage = 'detail'; this.render(); }
     
     importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.xlsx,.xls';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const data = new Uint8Array(event.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    let importedCount = 0;
+                    const errors = [];
+                    
+                    workbook.SheetNames.forEach((sheetName, sheetIndex) => {
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                         
-                        let importedCount = 0;
-                        const errors = [];
-                        
-                        // 遍历所有 sheet
-                        workbook.SheetNames.forEach((sheetName, sheetIndex) => {
-                            const worksheet = workbook.Sheets[sheetName];
-                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        for (let i = 1; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (!row || !row[0]) continue;
                             
-                            // 跳过标题行（第一行）
-                            for (let i = 1; i < jsonData.length; i++) {
-                                const row = jsonData[i];
-                                if (!row || !row[0]) continue; // 跳过空行
+                            try {
+                                const year = parseInt(row[0]) || new Date().getFullYear();
+                                const awardName = (row[1] || '').toString() || '未命名奖项';
+                                const recipients = (row[2] || '').toString().replace(/、/g, ',');
+                                const organization = (row[3] || '').toString().replace(/、/g, ',');
                                 
-                                try {
-                                    const year = parseInt(row[0]) || new Date().getFullYear();
-                                    const awardName = (row[1] || '').toString() || '未命名奖项';
-                                    const recipients = (row[2] || '').toString().replace(/、/g, ',');
-                                    const organization = (row[3] || '').toString().replace(/、/g, ',');
-                                    
-                                    // 确定奖项等级
-                                    let level = '校级';
-                                    if (awardName.includes('国家')) level = '国家级';
-                                    else if (awardName.includes('省')) level = '省级';
-                                    else if (awardName.includes('市')) level = '市级';
-                                    
-                                    mockData.push({
-                                        id: mockData.length + 1,
-                                        name: awardName,
-                                        award_name: awardName,
-                                        category: '未分类',
-                                        level,
-                                        year,
-                                        session: null,
-                                        recipients,
-                                        organization,
-                                        department: '',
-                                        description: '来自表格: ' + sheetName + '，第' + (i+1) + '行',
-                                        created_at: new Date().toISOString().split('T')[0]
-                                    });
-                                    importedCount++;
-                                } catch (e) {
-                                    errors.push('Sheet ' + sheetName + ' 第' + (i+1) + '行: ' + e.message);
-                                }
+                                let level = '校级';
+                                if (awardName.includes('国家')) level = '国家级';
+                                else if (awardName.includes('省')) level = '省级';
+                                else if (awardName.includes('市')) level = '市级';
+                                
+                                mockData.push({
+                                    id: mockData.length + 1,
+                                    name: awardName,
+                                    award_name: awardName,
+                                    category: '未分类',
+                                    level,
+                                    year,
+                                    session: null,
+                                    recipients,
+                                    organization,
+                                    department: '',
+                                    description: '来自表格: ' + sheetName + '，第' + (i+1) + '行',
+                                    created_at: new Date().toISOString().split('T')[0]
+                                });
+                                importedCount++;
+                            } catch (err) {
+                                errors.push('Sheet ' + sheetName + ' 第' + (i+1) + '行: ' + err.message);
                             }
-                        });
-                        
-                        let message = '成功导入 ' + importedCount + ' 条数据！';
-                        if (errors.length > 0) {
-                            message += '\n\n导入失败 ' + errors.length + ' 条：\n' + errors.join('\n');
                         }
-                        alert(message);
-                        this.render();
-                    } catch (e) {
-                        alert('导入失败: ' + e.message);
+                    });
+                    
+                    let message = '成功导入 ' + importedCount + ' 条数据！';
+                    if (errors.length > 0) {
+                        message += '\n\n导入失败 ' + errors.length + ' 条：\n' + errors.join('\n');
                     }
-                };
-                reader.readAsArrayBuffer(file);
+                    alert(message);
+                    this.render();
+                } catch (err) {
+                    alert('导入失败: ' + err.message);
+                }
             };
-            input.click();
-        }
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+    
     exportData() { alert('导出功能开发中。'); }
     deleteAward(id) { if (confirm('确定要删除这条获奖信息吗？')) { alert('删除功能开发中。'); } }
 }

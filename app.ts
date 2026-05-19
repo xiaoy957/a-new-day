@@ -1,4 +1,5 @@
 import { SupabaseClient, createClient } from '@supabase/supabase-js'
+import { encryptStorage, decryptStorage, removeStorage } from './utils/crypto'
 
 const SUPABASE_URL = 'https://your-project.supabase.co'
 const SUPABASE_KEY = 'your-anon-key'
@@ -77,14 +78,14 @@ App({
   },
 
   async onLaunch() {
-    const userInfo = wx.getStorageSync('user')
+    const userInfo = decryptStorage('user')
     if (userInfo) {
-      this.globalData.user = JSON.parse(userInfo)
+      this.globalData.user = userInfo
     }
     
-    const favorites = wx.getStorageSync('favorites')
+    const favorites = decryptStorage('favorites')
     if (favorites) {
-      this.globalData.favorites = JSON.parse(favorites)
+      this.globalData.favorites = favorites
     }
   },
 
@@ -99,8 +100,9 @@ App({
       })
       if (error) throw error
       if (user) {
-        this.globalData.user = user as unknown as User
-        wx.setStorageSync('user', JSON.stringify(user))
+        const userData = user as unknown as User
+        this.globalData.user = userData
+        encryptStorage('user', userData)
       }
       return user
     } catch (error) {
@@ -113,20 +115,20 @@ App({
     await supabase.auth.signOut()
     this.globalData.user = null
     this.globalData.favorites = []
-    wx.removeStorageSync('user')
-    wx.removeStorageSync('favorites')
+    removeStorage('user')
+    removeStorage('favorites')
   },
 
   addFavorite(awardId: number) {
     if (!this.globalData.favorites.includes(awardId)) {
       this.globalData.favorites.push(awardId)
-      wx.setStorageSync('favorites', JSON.stringify(this.globalData.favorites))
+      encryptStorage('favorites', this.globalData.favorites)
     }
   },
 
   removeFavorite(awardId: number) {
     this.globalData.favorites = this.globalData.favorites.filter(id => id !== awardId)
-    wx.setStorageSync('favorites', JSON.stringify(this.globalData.favorites))
+    encryptStorage('favorites', this.globalData.favorites)
   },
 
   isFavorite(awardId: number): boolean {

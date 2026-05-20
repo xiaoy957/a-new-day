@@ -973,55 +973,67 @@ class App {
                     
                     let importedCount = 0;
                     const errors = [];
+                    const newRecords = [];
                     
                     workbook.SheetNames.forEach((sheetName, sheetIndex) => {
-                        const worksheet = workbook.Sheets[sheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        
-                        for (let i = 1; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            if (!row || !row[0]) continue;
+                        try {
+                            const worksheet = workbook.Sheets[sheetName];
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                             
-                            try {
-                                const year = parseInt(row[0]) || new Date().getFullYear();
-                                const awardName = (row[1] || '').toString() || '未命名奖项';
-                                const recipients = (row[2] || '').toString().replace(/、/g, ',');
-                                const organization = (row[3] || '').toString().replace(/、/g, ',');
+                            for (let i = 1; i < jsonData.length; i++) {
+                                const row = jsonData[i];
+                                if (!row || row.length === 0) continue;
                                 
-                                let level = '校级';
-                                if (awardName.includes('国家')) level = '国家级';
-                                else if (awardName.includes('省')) level = '省级';
-                                else if (awardName.includes('市')) level = '市级';
-                                
-                                mockData.push({
-                                    id: mockData.length + 1,
-                                    name: awardName,
-                                    award_name: awardName,
-                                    category: '未分类',
-                                    level,
-                                    year,
-                                    session: null,
-                                    recipients,
-                                    organization,
-                                    department: '',
-                                    description: '来自表格: ' + sheetName + '，第' + (i+1) + '行',
-                                    created_at: new Date().toISOString().split('T')[0]
-                                });
-                                importedCount++;
-                            } catch (err) {
-                                errors.push('Sheet ' + sheetName + ' 第' + (i+1) + '行: ' + err.message);
+                                try {
+                                    const yearStr = String(row[0] || '').trim();
+                                    const year = yearStr ? parseInt(yearStr) : new Date().getFullYear();
+                                    const awardName = String(row[1] || '未命名奖项').trim();
+                                    const recipients = String(row[2] || '').trim().replace(/、/g, ',');
+                                    const organization = String(row[3] || '').trim().replace(/、/g, ',');
+                                    
+                                    if (!awardName) continue;
+                                    
+                                    let level = '校级';
+                                    if (awardName.includes('国家')) level = '国家级';
+                                    else if (awardName.includes('省')) level = '省级';
+                                    else if (awardName.includes('市')) level = '市级';
+                                    
+                                    newRecords.push({
+                                        id: mockData.length + newRecords.length + 1,
+                                        name: awardName,
+                                        award_name: awardName,
+                                        category: '未分类',
+                                        level,
+                                        year,
+                                        session: null,
+                                        recipients: recipients || '未知',
+                                        organization: organization || '未知',
+                                        department: '',
+                                        description: '来自表格: ' + sheetName + '，第' + (i+1) + '行',
+                                        created_at: new Date().toISOString().split('T')[0]
+                                    });
+                                    importedCount++;
+                                } catch (err) {
+                                    errors.push('Sheet ' + sheetName + ' 第' + (i+1) + '行: ' + (err.message || '未知错误'));
+                                }
                             }
+                        } catch (err) {
+                            errors.push('处理 Sheet ' + sheetName + ' 时出错: ' + (err.message || '未知错误'));
                         }
                     });
                     
+                    mockData.push(...newRecords);
+                    
                     let message = '成功导入 ' + importedCount + ' 条数据！';
                     if (errors.length > 0) {
-                        message += '\n\n导入失败 ' + errors.length + ' 条：\n' + errors.join('\n');
+                        message += '\n\n导入失败 ' + errors.length + ' 条：\n' + errors.slice(0, 10).join('\n');
+                        if (errors.length > 10) message += '\n... 还有 ' + (errors.length - 10) + ' 条错误';
                     }
                     alert(message);
+                    store.currentPage = 'admin';
                     this.render();
                 } catch (err) {
-                    alert('导入失败: ' + err.message);
+                    alert('导入失败: ' + (err.message || '未知错误，请检查文件格式'));
                 }
             };
             reader.readAsArrayBuffer(file);
